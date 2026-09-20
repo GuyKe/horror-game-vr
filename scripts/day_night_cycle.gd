@@ -94,14 +94,20 @@ func _apply_state() -> void:
 	_env.background_color = sky_color
 	_env.fog_enabled = true
 	_env.fog_light_color = fog_color
-	_env.fog_density = 0.015
+	_env.fog_density = 0.008
 
+	# Godot's ambient/sun energy scale reads much darker than three.js's for
+	# the same numeric intensity, so both get a substantial multiplier here
+	# on top of the ported values to land at a comparable apparent
+	# brightness. Biased toward hemi_sky (rather than a 50/50 blend with
+	# hemi_ground) since upward-facing surfaces -- most of what's visible
+	# from a standing player -- mainly catch sky-colored ambient light.
 	_env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	_env.ambient_light_color = hemi_sky.lerp(hemi_ground, 0.5)
-	_env.ambient_light_energy = hemi_intensity
+	_env.ambient_light_color = hemi_sky.lerp(hemi_ground, 0.25)
+	_env.ambient_light_energy = hemi_intensity * 3.0
 
 	_sun_light.light_color = sun_color
-	_sun_light.light_energy = sun_intensity
+	_sun_light.light_energy = sun_intensity * 2.5
 
 	var angle: float = _t * TAU
 	var sun_pos := Vector3(cos(angle) * SUN_RADIUS, sin(angle) * SUN_RADIUS, -20.0)
