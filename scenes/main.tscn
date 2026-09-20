@@ -1,0 +1,92 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/xr_player.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/entity.tscn" id="2"]
+[ext_resource type="Script" path="res://scripts/scare_trigger.gd" id="3"]
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 1
+background_color = Color(0.01, 0.01, 0.012, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.05, 0.05, 0.07, 1)
+ambient_light_energy = 0.6
+fog_enabled = true
+fog_light_color = Color(0.02, 0.02, 0.03, 1)
+fog_density = 0.05
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Mat_surface"]
+albedo_color = Color(0.09, 0.085, 0.09, 1)
+roughness = 0.95
+metallic = 0.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_door"]
+albedo_color = Color(0.15, 0.03, 0.03, 1)
+roughness = 0.8
+metallic = 0.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_trigger"]
+size = Vector3(3, 3, 1.5)
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="Floor" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, -6.5)
+use_collision = true
+size = Vector3(3.4, 0.2, 15)
+material = SubResource("Mat_surface")
+
+[node name="Ceiling" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, -6.5)
+use_collision = true
+size = Vector3(3.4, 0.2, 15)
+material = SubResource("Mat_surface")
+
+[node name="WallLeft" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7, 1.4, -6.5)
+use_collision = true
+size = Vector3(0.2, 3, 15)
+material = SubResource("Mat_surface")
+
+[node name="WallRight" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7, 1.4, -6.5)
+use_collision = true
+size = Vector3(0.2, 3, 15)
+material = SubResource("Mat_surface")
+
+[node name="EndWall" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -14)
+use_collision = true
+size = Vector3(3.4, 3, 0.2)
+material = SubResource("Mat_door")
+
+[node name="LampNear" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -3)
+light_color = Color(0.85, 0.75, 0.55, 1)
+light_energy = 0.5
+omni_range = 4.0
+shadow_enabled = false
+
+[node name="LampFar" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -10)
+light_color = Color(0.7, 0.6, 0.5, 1)
+light_energy = 0.35
+omni_range = 4.0
+shadow_enabled = false
+
+[node name="XRPlayer" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Entity" parent="." instance=ExtResource("2")]
+
+[node name="ScareTrigger" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -12.5)
+script = ExtResource("3")
+entity_path = NodePath("../Entity")
+player_path = NodePath("../XRPlayer")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ScareTrigger"]
+shape = SubResource("BoxShape3D_trigger")
