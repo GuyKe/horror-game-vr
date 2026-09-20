@@ -32,12 +32,36 @@ scripts/
   game_manager.gd           Autoload; synthesizes the stinger sound
   entity.gd                 Appear/retreat animation for the scare
   scare_trigger.gd           Area3D that fires the encounter once
+addons/godotopenxrvendors  Godot OpenXR Vendors plugin (Meta loader only,
+                            pruned to ~50MB) — required for OpenXR to
+                            actually launch in VR on a real Quest; see below
 keystore/debug.keystore    Standard Android debug key (for sideload builds)
 tools/
   setup_godot.sh            Installs Godot + export templates + Android build template
   build_apk.sh               Runs the actual export to build/threshold.apk
 .github/workflows/build-apk.yml   CI: builds the APK on every push
 ```
+
+### Why `addons/godotopenxrvendors` is required
+
+Godot's built-in OpenXR support does **not** ship a Meta/Quest loader or add
+any of the Android manifest entries a standalone headset needs to launch an
+app straight into VR. Without this plugin, the app installs and opens fine
+but immediately falls back to flat "normal mode" with the error *"OpenXR
+failed to start, check if your HMD is connected"* — even while running on
+the headset itself — because the manifest is missing the
+`com.oculus.intent.category.VR` / `org.khronos.openxr.intent.category.IMMERSIVE_HMD`
+launch categories and `com.oculus.supportedDevices` metadata, and there's no
+Meta OpenXR loader bundled to bind to the runtime.
+
+This project vendors the [Godot OpenXR Vendors
+plugin](https://github.com/GodotVR/godot_openxr_vendors) (tag `3.1.2-stable`,
+the last release compatible with Godot 4.3 — later releases require Godot
+4.4+) with everything except the Meta loader stripped out to keep the repo
+small. The export preset enables it via `xr_features/enable_meta_plugin=true`
+and `meta_xr_features/*`. If you ever reinstall it yourself (Project →
+Install Android Build Template, then Asset Library → search "OpenXR
+Vendors"), make sure you get a `3.x` release, not `4.x`/`5.x`.
 
 ## Getting the APK
 
