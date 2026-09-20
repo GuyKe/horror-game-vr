@@ -5,6 +5,8 @@ extends Node3D
 
 const SECONDS_PER_STICK := 60.0
 const EMBER_COUNT := 60
+const LIGHT_ENERGY := 24.0
+const LIGHT_RANGE := 32.0
 
 var is_lit := false
 var remaining_seconds := 0.0
@@ -23,6 +25,7 @@ func _ready() -> void:
 	_build_logs()
 	_build_flame()
 	_build_embers()
+	_light.omni_range = LIGHT_RANGE
 	_fire_group.visible = false
 
 
@@ -139,7 +142,7 @@ func _process(delta: float) -> void:
 	var elapsed := _clock
 
 	var flicker: float = 0.85 + 0.1 * sin(elapsed * 13.7) + 0.08 * sin(elapsed * 27.1 + 1.3) + 0.05 * sin(elapsed * 5.3)
-	_light.light_energy = 6.0 * flicker
+	_light.light_energy = LIGHT_ENERGY * flicker
 
 	for i in _flame_sprites.size():
 		var s := _flame_sprites[i]
