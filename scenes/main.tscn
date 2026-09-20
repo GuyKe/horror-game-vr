@@ -1,92 +1,95 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=14 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/xr_player.tscn" id="1"]
-[ext_resource type="PackedScene" path="res://scenes/entity.tscn" id="2"]
-[ext_resource type="Script" path="res://scripts/scare_trigger.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/xr_player.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/bonfire.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/tutorial.tscn" id="4"]
+[ext_resource type="Script" path="res://scripts/forest.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/pickups_spawner.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/day_night_cycle.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/world_menu.gd" id="8"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
-background_color = Color(0.01, 0.01, 0.012, 1)
-ambient_light_source = 2
-ambient_light_color = Color(0.05, 0.05, 0.07, 1)
-ambient_light_energy = 0.6
+background_color = Color(0.7490, 0.8902, 1.0, 1)
 fog_enabled = true
-fog_light_color = Color(0.02, 0.02, 0.03, 1)
-fog_density = 0.05
-tonemap_mode = 2
+fog_light_color = Color(0.6824, 0.8314, 0.9412, 1)
+fog_density = 0.015
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.5, 0.5, 1)
+ambient_light_energy = 0.8
+tonemap_mode = 3
+tonemap_exposure = 1.3
 
-[sub_resource type="StandardMaterial3D" id="Mat_surface"]
-albedo_color = Color(0.09, 0.085, 0.09, 1)
+[sub_resource type="CylinderMesh" id="CylinderMesh_forest_floor"]
+top_radius = 120.0
+bottom_radius = 120.0
+height = 0.02
+radial_segments = 64
+
+[sub_resource type="StandardMaterial3D" id="Mat_forest_floor"]
+albedo_color = Color(0.1098, 0.1647, 0.1098, 1)
+roughness = 1.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_sand"]
+top_radius = 9.0
+bottom_radius = 9.0
+height = 0.02
+radial_segments = 48
+
+[sub_resource type="StandardMaterial3D" id="Mat_sand"]
+albedo_color = Color(0.7608, 0.6588, 0.4706, 1)
 roughness = 0.95
-metallic = 0.0
-
-[sub_resource type="StandardMaterial3D" id="Mat_door"]
-albedo_color = Color(0.15, 0.03, 0.03, 1)
-roughness = 0.8
-metallic = 0.0
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_trigger"]
-size = Vector3(3, 3, 1.5)
 
 [node name="Main" type="Node3D"]
+script = ExtResource("1")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_main")
 
-[node name="Floor" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, -6.5)
-use_collision = true
-size = Vector3(3.4, 0.2, 15)
-material = SubResource("Mat_surface")
+[node name="DayNightCycle" type="Node3D" parent="."]
+script = ExtResource("7")
+world_environment_path = NodePath("../WorldEnvironment")
 
-[node name="Ceiling" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, -6.5)
-use_collision = true
-size = Vector3(3.4, 0.2, 15)
-material = SubResource("Mat_surface")
+[node name="Sun" type="Node3D" parent="DayNightCycle"]
 
-[node name="WallLeft" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7, 1.4, -6.5)
-use_collision = true
-size = Vector3(0.2, 3, 15)
-material = SubResource("Mat_surface")
+[node name="SunLight" type="DirectionalLight3D" parent="DayNightCycle/Sun"]
+shadow_enabled = true
 
-[node name="WallRight" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7, 1.4, -6.5)
-use_collision = true
-size = Vector3(0.2, 3, 15)
-material = SubResource("Mat_surface")
+[node name="SunGlow" type="Sprite3D" parent="DayNightCycle/Sun"]
+billboard = 1
+shaded = false
+transparent = true
+double_sided = true
+pixel_size = 0.109375
 
-[node name="EndWall" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -14)
-use_collision = true
-size = Vector3(3.4, 3, 0.2)
-material = SubResource("Mat_door")
+[node name="WorldGroup" type="Node3D" parent="."]
+transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, 0, 0, 0)
 
-[node name="LampNear" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -3)
-light_color = Color(0.85, 0.75, 0.55, 1)
-light_energy = 0.5
-omni_range = 4.0
-shadow_enabled = false
+[node name="ForestFloor" type="MeshInstance3D" parent="WorldGroup"]
+mesh = SubResource("CylinderMesh_forest_floor")
+surface_material_override/0 = SubResource("Mat_forest_floor")
 
-[node name="LampFar" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -10)
-light_color = Color(0.7, 0.6, 0.5, 1)
-light_energy = 0.35
-omni_range = 4.0
-shadow_enabled = false
+[node name="Sand" type="MeshInstance3D" parent="WorldGroup"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+mesh = SubResource("CylinderMesh_sand")
+surface_material_override/0 = SubResource("Mat_sand")
 
-[node name="XRPlayer" parent="." instance=ExtResource("1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+[node name="Forest" type="Node3D" parent="WorldGroup"]
+script = ExtResource("5")
 
-[node name="Entity" parent="." instance=ExtResource("2")]
+[node name="Trunks" type="MultiMeshInstance3D" parent="WorldGroup/Forest"]
 
-[node name="ScareTrigger" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -12.5)
-script = ExtResource("3")
-entity_path = NodePath("../Entity")
-player_path = NodePath("../XRPlayer")
+[node name="Foliage" type="MultiMeshInstance3D" parent="WorldGroup/Forest"]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="ScareTrigger"]
-shape = SubResource("BoxShape3D_trigger")
+[node name="Bonfire" parent="WorldGroup" instance=ExtResource("3")]
+
+[node name="Pickups" type="Node3D" parent="WorldGroup"]
+script = ExtResource("6")
+
+[node name="XRPlayer" parent="." instance=ExtResource("2")]
+
+[node name="Tutorial" parent="." instance=ExtResource("4")]
+
+[node name="WorldMenu" type="Node3D" parent="."]
+script = ExtResource("8")

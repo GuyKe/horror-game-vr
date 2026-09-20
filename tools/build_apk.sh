@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Exports the "Meta Quest" Android preset to build/threshold.apk.
+# Exports the "Meta Quest" Android preset to build/fifis_forest.apk.
 # Usage: tools/build_apk.sh [debug|release]
 set -euo pipefail
 
@@ -11,10 +11,10 @@ mkdir -p "$PROJECT_DIR/build"
 
 case "$MODE" in
 	debug)
-		"$GODOT_BIN" --headless --path "$PROJECT_DIR" --export-debug "Meta Quest" build/threshold.apk
+		"$GODOT_BIN" --headless --path "$PROJECT_DIR" --export-debug "Meta Quest" build/fifis_forest.apk
 		;;
 	release)
-		"$GODOT_BIN" --headless --path "$PROJECT_DIR" --export-release "Meta Quest" build/threshold.apk
+		"$GODOT_BIN" --headless --path "$PROJECT_DIR" --export-release "Meta Quest" build/fifis_forest.apk
 		;;
 	*)
 		echo "Usage: $0 [debug|release]" >&2
@@ -22,4 +22,4 @@ case "$MODE" in
 		;;
 esac
 
-echo "APK written to $PROJECT_DIR/build/threshold.apk"
+echo "APK written to $PROJECT_DIR/build/fifis_forest.apk"

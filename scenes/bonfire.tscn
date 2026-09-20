@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/bonfire.gd" id="1"]
+
+[node name="Bonfire" type="Node3D"]
+script = ExtResource("1")
+
+[node name="FireGroup" type="Node3D" parent="."]
+
+[node name="FireLight" type="OmniLight3D" parent="FireGroup"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+light_color = Color(1, 0.4784, 0.1608, 1)
+light_energy = 6.0
+omni_range = 18.0
+shadow_enabled = false
+
+[node name="Embers" type="MultiMeshInstance3D" parent="FireGroup"]

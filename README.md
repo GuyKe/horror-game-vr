@@ -1,74 +1,90 @@
-# Threshold — a Meta Quest VR horror prototype
+# Fifi's Forest — a native Meta Quest port
 
-A minimal, playable VR horror slice built with **Godot 4.3** and **OpenXR**,
-targeting Meta Quest 2/3/Pro. You walk down a dark corridor with a flickering
-flashlight; something is waiting at the door.
+An atmospheric VR experience for Meta Quest, built with **Godot 4.3** and
+**OpenXR**. You spawn at sunrise at the edge of a sand clearing in the
+middle of a forest that's noticeably larger than you are. Trees ring the
+clearing on every side; a bonfire sits cold at its center. Sticks and rocks
+are scattered around — pick them up and feed sticks to the fire to light it
+and push back the dark; each stick buys about a minute of burn time. The sky
+cycles through a full day and night as you play.
 
-This is a first playable milestone, not a full game: one environment, core
-locomotion, a handheld flashlight plus a dim always-on torch that lights a
-small radius around the player, and one scripted scare. No external art or
-audio assets — the geometry is built from primitives and the jump-scare
-stinger is synthesized in code, so the whole project is pure source.
+This is a **native port** of [first-vr-game](https://github.com/GuyKe/first-vr-game)
+("Fifi's Forest" / "Firelight Clearing"), which is a browser-based
+WebXR/Three.js experience. Same look, same scattered layout (identical seeded
+placement for the forest and pickups), same day/night cycle timing, same
+bonfire and grab mechanics — reimplemented from scratch in Godot/GDScript
+since the two engines share no code, and packaged as a standalone
+installable APK instead of a page you open in the Quest Browser.
 
 ## Controls
 
 | Input | Action |
 |---|---|
-| Left thumbstick | Smooth locomotion (head-relative) |
-| Right thumbstick (flick left/right) | Snap turn (30°) |
-| Right trigger (hold, aim, release) | Teleport |
-| Right A button | Toggle flashlight |
+| Left thumbstick | Smooth locomotion (head-relative, no snap turn — same as the original) |
+| Either trigger, pointed at a stick/rock | Hold to pull it into your hand |
+| Either trigger, near the bonfire | Feed it a held stick |
+| Either trigger, pointed at a menu button | Select |
+
+The world starts on an in-headset menu with **PLAY** (drops you at the
+bonfire) and **TUTORIAL** (a bare practice platform where you walk to a
+glowing dot to learn locomotion, then return to the menu automatically).
+
+## What's ported vs. approximated
+
+Faithfully ported (same constants/formulas as the source):
+- Forest floor + sand clearing + seeded tree scatter (seed `1337`)
+- Seeded stick/rock scatter (seed `4242`) and pickup/grab mechanics
+- Day/night sky, fog, ambient and sun/moon keyframes, 8-minute cycle
+- Bonfire logs, flicker, embers, fuel timer (60s/stick)
+- World scale (1.6x environment around a real-scale player)
+
+Necessarily approximated (no equivalent primitive, or an engine-forced
+change):
+- The clearing's decorative boundary ring is omitted — Godot has no flat
+  annulus primitive and a torus reads as a bulging donut, not a flat ring.
+- Menu/HUD text uses Godot's `Label3D` instead of hand-drawn canvas
+  textures, and rocks use a low-poly sphere instead of an icosahedron
+  (Godot's primitive mesh set has neither a canvas nor an icosahedron).
+- No physics/collision anywhere (matching the source, which has none
+  either — locomotion is flat XZ translation, and you can walk through
+  trees). OpenXR floor-tracking replaces the source's desktop-only
+  1.6m eye-height fallback.
 
 ## Project layout
 
 ```
-project.godot           Engine + OpenXR + autoload config
-export_presets.cfg       "Meta Quest" Android/OpenXR export preset
+project.godot            Engine + OpenXR config
+export_presets.cfg        "Meta Quest" Android/OpenXR export preset
 scenes/
-  main.tscn               Corridor level, lighting, scare trigger
-  xr_player.tscn           XR rig: origin, camera, controllers, flashlight
-  entity.tscn              The scare "entity"
+  main.tscn                Root scene: environment, day/night, menu wiring
+  xr_player.tscn             XR rig: origin, camera, controllers (locomotion only)
+  bonfire.tscn                Fire light + embers container (built in script)
+  tutorial.tscn                Walk-to-the-dot practice platform
 scripts/
-  xr_player.gd             Locomotion, snap turn, teleport, flashlight
-  game_manager.gd           Autoload; synthesizes the stinger sound
-  entity.gd                 Appear/retreat animation for the scare
-  scare_trigger.gd           Area3D that fires the encounter once
-addons/godotopenxrvendors  Godot OpenXR Vendors plugin (Meta loader only,
-                            pruned to ~50MB) — required for OpenXR to
-                            actually launch in VR on a real Quest; see below
-keystore/debug.keystore    Standard Android debug key (for sideload builds)
+  main.gd                     Mode state (menu/play/tutorial), spawn points, HUD
+  xr_player.gd                  Head-relative smooth locomotion
+  day_night_cycle.gd             Sky/fog/ambient/sun keyframe cycle
+  forest.gd                       Seeded tree scatter (MultiMesh)
+  bonfire.gd                       Logs, flame, embers, fuel timer
+  pickups_spawner.gd               Seeded stick/rock scatter + pickup wiring
+  interactable.gd / interaction_manager.gd   Shared "nearby + press to interact"
+  grab_system.gd                    Point-and-hold VR pull-to-hand
+  world_menu.gd                      In-world 3D PLAY/TUTORIAL panel
+  tutorial.gd                         Practice platform logic
+  mulberry32.gd                       Seeded PRNG, ported bit-for-bit from the source
+  procedural_textures.gd               Runtime-generated glow/grid/panel textures
+keystore/debug.keystore     Standard Android debug key (for sideload builds)
 tools/
-  setup_godot.sh            Installs Godot + export templates + Android build template
-  build_apk.sh               Runs the actual export to build/threshold.apk
+  setup_godot.sh               Installs Godot + export templates + Android build template
+  build_apk.sh                  Runs the export to build/fifis_forest.apk
 .github/workflows/build-apk.yml   CI: builds the APK on every push
 ```
 
-### Why `addons/godotopenxrvendors` is required
-
-Godot's built-in OpenXR support does **not** ship a Meta/Quest loader or add
-any of the Android manifest entries a standalone headset needs to launch an
-app straight into VR. Without this plugin, the app installs and opens fine
-but immediately falls back to flat "normal mode" with the error *"OpenXR
-failed to start, check if your HMD is connected"* — even while running on
-the headset itself — because the manifest is missing the
-`com.oculus.intent.category.VR` / `org.khronos.openxr.intent.category.IMMERSIVE_HMD`
-launch categories and `com.oculus.supportedDevices` metadata, and there's no
-Meta OpenXR loader bundled to bind to the runtime.
-
-This project vendors the [Godot OpenXR Vendors
-plugin](https://github.com/GodotVR/godot_openxr_vendors) (tag `3.1.2-stable`,
-the last release compatible with Godot 4.3 — later releases require Godot
-4.4+) with everything except the Meta loader stripped out to keep the repo
-small. The export preset enables it via `xr_features/enable_meta_plugin=true`
-and `meta_xr_features/*`. If you ever reinstall it yourself (Project →
-Install Android Build Template, then Asset Library → search "OpenXR
-Vendors"), make sure you get a `3.x` release, not `4.x`/`5.x`.
-
 ## Getting the APK
 
-**Easiest: GitHub Actions.** Every push builds `build/threshold.apk` and
-uploads it as a workflow artifact ("threshold-quest-apk") under the Actions
-tab — download it and skip straight to sideloading below.
+**Easiest: GitHub Actions.** Every push builds `build/fifis_forest.apk` and
+uploads it as a workflow artifact ("fifis-forest-quest-apk") under the
+Actions tab — download it and skip straight to sideloading below.
 
 **Locally**, you need a real Android SDK (this only works on a machine with
 unrestricted internet — Godot's OpenXR export requires Android's Gradle
@@ -78,41 +94,28 @@ Maven, `dl.google.com`):
 ```bash
 export ANDROID_SDK_ROOT=/path/to/your/Android/sdk   # needs platforms;android-34, build-tools;34.0.0
 bash tools/setup_godot.sh      # downloads Godot 4.3 + export templates, once
-bash tools/build_apk.sh debug  # -> build/threshold.apk
+bash tools/build_apk.sh debug  # -> build/fifis_forest.apk
 ```
-
-`tools/setup_godot.sh` is idempotent — re-run it any time; it skips steps
-that are already done.
-
-> **Note on this repo's own dev environment:** this project was scaffolded
-> in a network-sandboxed container that blocks `dl.google.com`, so the
-> Gradle/OpenXR build was validated as far as Android Gradle Plugin
-> resolution (project, export preset, keystore, and Android build template
-> all confirmed correct) but not compiled end-to-end there. The CI workflow
-> above builds on a normal GitHub-hosted runner with full internet access
-> and does produce a real APK.
 
 ## Sideloading to your Quest
 
 1. Enable Developer Mode on the headset via the Meta Horizon phone app.
 2. Connect the headset over USB, accept the "Allow USB debugging" prompt in
    the headset.
-3. `adb install -r build/threshold.apk`
+3. `adb install -r build/fifis_forest.apk`
 
 The app will appear in your Quest's app library under "Unknown Sources".
 
-## Opening the project in the Godot editor
+## Why OpenXR needs a vendored plugin
 
-Grab the matching editor build (Godot 4.3, Standard, not .NET) from
-https://godotengine.org/download and open `project.godot`. You can run the
-scene in an XR-capable desktop headset via OpenXR, or connect a Quest over
-Air Link/Link cable and play in `main.tscn` directly.
+Godot's core engine ships no Meta/Quest OpenXR loader and adds none of the
+Android manifest entries a standalone headset needs to launch straight into
+VR. `addons/godotopenxrvendors` (the Godot OpenXR Vendors plugin, pruned to
+just the Meta loader) supplies both — see the export preset's
+`xr_features/enable_meta_plugin` and `meta_xr_features/*` options.
 
 ## Where to go next
 
-Ideas for the next milestone, roughly in order of impact:
-- Real environment art (replace CSG primitives with modeled/decorated rooms)
-- Hand-presence models + grab interactions instead of the placeholder cubes
-- More than one scare/encounter, and a win/lose condition
-- Comfort options menu (vignette on turn, locomotion speed, snap vs. smooth turn toggle)
-- A release keystore + signed release build for wider distribution
+The source project's own README lists good next steps that apply here too:
+a reason to venture into the tree line, more uses for rocks, a way to see
+remaining fuel without standing at the fire, ambient sound.
