@@ -5,9 +5,10 @@ targeting Meta Quest 2/3/Pro. You walk down a dark corridor with a flickering
 flashlight; something is waiting at the door.
 
 This is a first playable milestone, not a full game: one environment, core
-locomotion, a flashlight, and one scripted scare. No external art or audio
-assets — the geometry is built from primitives and the jump-scare stinger is
-synthesized in code, so the whole project is pure source.
+locomotion, a handheld flashlight plus a dim always-on torch that lights a
+small radius around the player, and one scripted scare. No external art or
+audio assets — the geometry is built from primitives and the jump-scare
+stinger is synthesized in code, so the whole project is pure source.
 
 ## Controls
 

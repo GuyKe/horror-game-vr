@@ -1,7 +1,9 @@
 extends CharacterBody3D
 ## VR rig: head-relative smooth locomotion + snap turn, trigger-to-teleport,
-## and a toggleable flickering flashlight. Movement/turn use the left/right
-## controller thumbsticks from Godot's default OpenXR action map.
+## a toggleable flickering flashlight, and an always-on flickering torch on
+## the player's back that lights a small radius around them regardless of
+## where the flashlight points. Movement/turn use the left/right controller
+## thumbsticks from Godot's default OpenXR action map.
 
 const MOVE_SPEED := 2.2
 const GRAVITY := 9.8
@@ -10,12 +12,14 @@ const STICK_DEADZONE := 0.2
 const SNAP_TURN_THRESHOLD := 0.6
 const SNAP_TURN_RESET := 0.3
 const FLASHLIGHT_ENERGY := 3.0
+const BACK_TORCH_ENERGY := 1.3
 
 @onready var xr_origin: XROrigin3D = $XROrigin3D
 @onready var xr_camera: XRCamera3D = $XROrigin3D/XRCamera3D
 @onready var left_hand: XRController3D = $XROrigin3D/LeftHand
 @onready var right_hand: XRController3D = $XROrigin3D/RightHand
 @onready var flashlight: SpotLight3D = $XROrigin3D/RightHand/Flashlight
+@onready var back_torch: OmniLight3D = $BackTorch
 @onready var teleport_ray: RayCast3D = $XROrigin3D/RightHand/TeleportRay
 @onready var teleport_marker: MeshInstance3D = $TeleportMarker
 
@@ -23,6 +27,7 @@ var _snap_turn_locked := false
 var _teleport_aiming := false
 var _flashlight_on := true
 var _flicker_accum := 0.0
+var _torch_flicker_accum := 0.0
 
 
 func _ready() -> void:
@@ -30,6 +35,7 @@ func _ready() -> void:
 	right_hand.button_released.connect(_on_right_button_released)
 	teleport_marker.visible = false
 	flashlight.light_energy = FLASHLIGHT_ENERGY
+	back_torch.light_energy = BACK_TORCH_ENERGY
 
 
 func _physics_process(delta: float) -> void:
@@ -38,6 +44,7 @@ func _physics_process(delta: float) -> void:
 	_handle_snap_turn()
 	_handle_teleport_aim()
 	_handle_flashlight_flicker(delta)
+	_handle_back_torch_flicker(delta)
 	move_and_slide()
 
 
@@ -130,3 +137,11 @@ func _handle_flashlight_flicker(delta: float) -> void:
 		return
 	_flicker_accum = 0.0
 	flashlight.light_energy = FLASHLIGHT_ENERGY + randf_range(-0.35, 0.15)
+
+
+func _handle_back_torch_flicker(delta: float) -> void:
+	_torch_flicker_accum += delta
+	if _torch_flicker_accum < 0.12:
+		return
+	_torch_flicker_accum = 0.0
+	back_torch.light_energy = BACK_TORCH_ENERGY + randf_range(-0.2, 0.1)
